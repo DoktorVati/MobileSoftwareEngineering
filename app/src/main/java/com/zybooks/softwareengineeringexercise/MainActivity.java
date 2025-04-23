@@ -1,6 +1,9 @@
 package com.zybooks.softwareengineeringexercise;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import android.os.Bundle;
 import android.util.Log;
 
@@ -90,11 +93,15 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
 
-        int counter = 0;
-        for (int i = 0; i < id.size(); i++)
-        {
 
-        }
-        Log.d("MainActivity", "Amount of items built" + counter);
+        // After parsing JSON:
+        ArrayList<Integer> finalListId = listId;
+        ArrayList<String> finalName = name;
+        runOnUiThread(() -> {
+            RecyclerView recyclerView = findViewById(R.id.recyclerView);
+            recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+            recyclerView.setAdapter(new ItemAdapter(finalListId, id, finalName));
+        });
+
     }
 }

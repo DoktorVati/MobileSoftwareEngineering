@@ -6,17 +6,18 @@
     android:orientation="horizontal"
     android:padding="8dp">
 
-    <!-- ID Column -->
+
+    <!-- List ID Column -->
     <TextView
-        android:id="@+id/idTextView"
+        android:id="@+id/listIdTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center"/>
 
-    <!-- List ID Column -->
+    <!-- ID Column -->
     <TextView
-        android:id="@+id/listIdTextView"
+        android:id="@+id/idTextView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
