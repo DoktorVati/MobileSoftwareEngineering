@@ -3,10 +3,8 @@ package com.zybooks.softwareengineeringexercise;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import android.os.Bundle;
 import android.util.Log;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,12 +20,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Apply the activity_main layout activity
         setContentView(R.layout.activity_main);
+
+        // Hides the action bar title at the top of the screen
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    // Calls the method that Fetches the data from the given URL
                     fetchDataFromUrl();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -36,11 +41,12 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+
     private void fetchDataFromUrl() throws IOException {
-        // Create a reference to the Fetch URL
+        // Create a reference to the given Fetch URL
         URL url = new URL("https://hiring.fetch.com/hiring.json");
 
-        // Get input stream from URL connection
+        // Get input stream from the URL connection
         URLConnection connection = url.openConnection();
         InputStream inputStream = connection.getInputStream();
 
@@ -50,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<Integer> listId = new ArrayList<>();
         ArrayList<String> name = new ArrayList<>();
 
+        // Will begin going through line by line
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream))) {
             StringBuilder stringBuilder = new StringBuilder();
             String line;
@@ -93,15 +100,81 @@ public class MainActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
 
+        // Calls the data sorter method and passes the data lists
+        sortData(listId, id, name);
 
-        // After parsing JSON:
+        // These final variables are needed because it is using them in a lambda expression
         ArrayList<Integer> finalListId = listId;
         ArrayList<String> finalName = name;
+
+        // This runs on the main UI thread since it can't update UI from background thread
         runOnUiThread(() -> {
             RecyclerView recyclerView = findViewById(R.id.recyclerView);
             recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
+            // creates and sets the adapter
             recyclerView.setAdapter(new ItemAdapter(finalListId, id, finalName));
         });
 
+    }
+
+    //This function will sort the data first by List ID, then secondly by Name
+    private void sortData(ArrayList<Integer> listId, ArrayList<Integer> id, ArrayList<String> name) {
+        // Create a list of indices of listId size
+        Integer[] indices = new Integer[listId.size()];
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = i;
+        }
+
+        // Sort the indices based on listId first, then by the numeric part of name
+        Arrays.sort(indices, (a, b) -> {
+            // First compare by listId
+            int listIdCompare = listId.get(a).compareTo(listId.get(b));
+            if (listIdCompare != 0) {
+                return listIdCompare;
+            }
+
+            // If listIds are equal, compare by the numeric part of the name
+            // This is because all of the names are Item and some #
+            try {
+                // Extract numbers from names due to the format Item ###
+                int numA = extractNumberFromName(name.get(a));
+                int numB = extractNumberFromName(name.get(b));
+                return Integer.compare(numA, numB);
+            } catch (Exception e) {
+                // Required Fallback for string comparison if the parsing fails
+                return name.get(a).compareTo(name.get(b));
+            }
+        });
+
+        // Create temporary lists for the sorted vars
+        ArrayList<Integer> sortedIds = new ArrayList<>();
+        ArrayList<Integer> sortedListIds = new ArrayList<>();
+        ArrayList<String> sortedNames = new ArrayList<>();
+
+        // Reorder all the lists to the sorted indices
+        for (int index : indices) {
+            sortedIds.add(id.get(index));
+            sortedListIds.add(listId.get(index));
+            sortedNames.add(name.get(index));
+        }
+
+        // Replace original lists with the sorted ones
+        id.clear();
+        listId.clear();
+        name.clear();
+
+        id.addAll(sortedIds);
+        listId.addAll(sortedListIds);
+        name.addAll(sortedNames);
+    }
+
+    // Helper method to extract the numeric part from Item XXX
+    private int extractNumberFromName(String name) {
+        try {
+            // Remove "Item " prefix and parse the remaining number
+            return Integer.parseInt(name.substring(5).trim());
+        } catch (Exception e) {
+            return 0; // Required Default value for if the parsing fails
+        }
     }
 }
